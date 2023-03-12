@@ -5,7 +5,6 @@ import fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import { schema } from "./schema.js";
 import { resolvers } from "./resolvers.js";
 
@@ -35,10 +34,8 @@ app.get("/generateToken/:name/:password", async (req, res) => {
 	const data = { username: req.params.name };
 	let db = await dbRtns.getDBInstance();
 	let user = await dbRtns.findOne(db, cfg.userCollection, data);
-	(await bcrypt.compare(
-		crypto.publicEncrypt(cfg.publicKey, req.params.password),
-		user.password
-	)) && res.send({ msg: "password doesn't match" });
+	(await bcrypt.compare(req.params.password, user.password)) &&
+		res.send({ msg: "password doesn't match" });
 	const token = app.jwt.sign(data);
 	res.send({ token });
 });

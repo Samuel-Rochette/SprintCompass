@@ -6,5 +6,3 @@ export const dburl = process.env.DBURL;
 export const db = process.env.DB;
 export const port = process.env.PORT;
 export const saltRounds = Number(process.env.SALT_ROUNDS);
-export const publicKey = process.env.PUBLIC_KEY;
-export const privateKey = process.env.PRIVATE_KEY;
