@@ -1,0 +1,21 @@
+{
+	"name": "fastify-app",
+	"version": "1.0.0",
+	"description": "",
+	"main": "gqlapp.js",
+	"type": "module",
+	"scripts": {
+		"start": "node --watch gqlapp"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@fastify/cors": "^8.2.0",
+		"@fastify/jwt": "^6.7.0",
+		"bcrypt": "^5.1.0",
+		"dotenv": "^16.0.3",
+		"fastify": "^4.14.1",
+		"mercurius": "^12.2.0",
+		"mongodb": "^5.1.0"
+	}
+}
