@@ -3,7 +3,7 @@ type Query {
   login(username: String, password: String) : String
 },
 type Mutation {
-  registeruser(username: String, password: String) : User
+  registeruser(username: String, password: String) : String
 },
 type User {
   username: String,

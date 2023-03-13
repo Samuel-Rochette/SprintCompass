@@ -1,9 +1,10 @@
 "use strict";
-import * as cfg from "./config.js";
 import * as dbRtns from "./db_routines.js";
+import * as cfg from "./config.js";
 import fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import mercurius from "mercurius";
 import bcrypt from "bcrypt";
 import { schema } from "./schema.js";
 import { resolvers } from "./resolvers.js";
@@ -22,24 +23,7 @@ app.decorate("authenticate", async (req, res) => {
 	}
 });
 
-app.post("/register", async (req, res) => {
-	const hash = await bcrypt.hash(req.body.password, cfg.saltRounds);
-	let db = await dbRtns.getDBInstance();
-	let user = { username: req.body.username, password: hash };
-	await dbRtns.addOne(db, cfg.userCollection, user);
-	res.send(`User ${req.body.username} registered!`);
-});
-
-app.get("/generateToken/:name/:password", async (req, res) => {
-	const data = { username: req.params.name };
-	let db = await dbRtns.getDBInstance();
-	let user = await dbRtns.findOne(db, cfg.userCollection, data);
-	(await bcrypt.compare(req.params.password, user.password)) &&
-		res.send({ msg: "password doesn't match" });
-	const token = app.jwt.sign(data);
-	res.send({ token });
-});
-
+// Test Route to validate jwt token
 app.get(
 	"/validateToken",
 	{ onRequest: [app.authenticate] },
@@ -48,10 +32,19 @@ app.get(
 	}
 );
 
-// app.register(mercurius, {
-// 	schema,
-// 	resolvers,
-// 	graphiql: true,
-// });
+app.register(mercurius, {
+	schema,
+	resolvers: {
+		...resolvers,
+		login: async ({ username, password }) => {
+			const data = { username };
+			let db = await dbRtns.getDBInstance();
+			let user = await dbRtns.findOne(db, cfg.userCollection, data);
+			if (!(await bcrypt.compare(password, user.password))) return null;
+			return app.jwt.sign(data);
+		},
+	},
+	graphiql: true,
+});
 
 app.listen({ port: cfg.port });
