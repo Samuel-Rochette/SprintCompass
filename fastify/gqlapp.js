@@ -20,9 +20,9 @@ app.post("/register", async (req, res) => {
 	const db = await dbRtns.getDBInstance();
 	const user = { username: req.body.username, password: hash };
 	const results = await dbRtns.addOne(db, cfg.userCollection, user);
-	return results.acknowledged
-		? "user successfully added"
-		: "failed to add user";
+	res.send(
+		results.acknowledged ? "user successfully added" : "failed to add user"
+	);
 });
 
 app.post("/login", async (req, res) => {

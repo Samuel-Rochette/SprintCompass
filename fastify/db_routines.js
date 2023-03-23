@@ -23,20 +23,29 @@ const getDBInstance = async () => {
 const addOne = (db, coll, doc) => db.collection(coll).insertOne(doc);
 const count = (db, coll) => db.collection(coll).countDocuments();
 const deleteAll = (db, coll) => db.collection(coll).deleteMany({});
+const deleteOne = (db, coll, criteria) =>
+	db.collection(coll).deleteOne(criteria);
 const addMany = (db, coll, docs) => db.collection(coll).insertMany(docs);
 const findOne = (db, coll, criteria) => db.collection(coll).findOne(criteria);
 const findAll = (db, coll, criteria, projection) =>
 	db.collection(coll).find(criteria).project(projection).toArray();
 const findUniqueValues = (db, coll, field) =>
 	db.collection(coll).distinct(field);
+const aggregate = (db, coll, options) =>
+	db.collection(coll).aggregate(options).toArray();
+const updateOne = (db, coll, criteria, update) =>
+	db.collection(coll).updateOne(criteria, update);
 
 export {
 	getDBInstance,
 	addOne,
 	count,
 	deleteAll,
+	deleteOne,
 	addMany,
 	findOne,
 	findAll,
 	findUniqueValues,
+	aggregate,
+	updateOne,
 };
