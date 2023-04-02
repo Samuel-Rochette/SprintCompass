@@ -1,6 +1,5 @@
 import { config } from "dotenv";
 config();
-export const userCollection = process.env.USERS_COLLECTION;
 export const secret = process.env.SECRET;
 export const dburl = process.env.DBURL;
 export const db = process.env.DB;
