@@ -19,19 +19,23 @@ app.post("/register", async (req, res) => {
 	const hash = await bcrypt.hash(req.body.password, cfg.saltRounds);
 	const db = await dbRtns.getDBInstance();
 	const user = { username: req.body.username, password: hash };
-	const results = await dbRtns.addOne(db, cfg.userCollection, user);
+	const results = await dbRtns.addOne(db, "appusers", user);
 	res.send(
-		results.acknowledged ? "user successfully added" : "failed to add user"
+		results.acknowledged
+			? { msg: "user successfully added", success: true }
+			: { msg: "failed to add user", success: false }
 	);
 });
 
 app.post("/login", async (req, res) => {
 	const data = { username: req.body.username };
 	const db = await dbRtns.getDBInstance();
-	const user = await dbRtns.findOne(db, cfg.userCollection, data);
+	const user = await dbRtns.findOne(db, "appusers", data);
 	if (!(await bcrypt.compare(req.body.password, user.password)))
 		res.send("Login Failed");
-	res.send(app.jwt.sign(data));
+	res.send({
+		token: app.jwt.sign({ displayName: user.username, userId: user._id }),
+	});
 });
 
 app.decorate("authenticate", async (req, res) => {
