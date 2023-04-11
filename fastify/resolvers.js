@@ -6,6 +6,13 @@ const resolvers = {
 		const db = await dbRtns.getDBInstance();
 		return await dbRtns.findAll(db, "appusers", {});
 	},
+	getprojectbyid: async ({ projectid }) => {
+		const db = await dbRtns.getDBInstance();
+		const results = await dbRtns.findOne(db, "projects", {
+			_id: new ObjectId(projectid),
+		});
+		return results;
+	},
 	getprojectsforuser: async ({ userid }) => {
 		const db = await dbRtns.getDBInstance();
 		const results = (
@@ -36,7 +43,7 @@ const resolvers = {
 						from: "appusers",
 						localField: "userid",
 						foreignField: "_id",
-						as: "user",
+						as: "users",
 					},
 				},
 				{
@@ -45,7 +52,19 @@ const resolvers = {
 					},
 				},
 			])
-		).map(e => e.user[0]);
+		)
+			.map(userproject =>
+				userproject.users.map(user => {
+					return {
+						_id: userproject._id,
+						userid: userproject.userid,
+						projectid: userproject.projectid,
+						role: userproject.role,
+						username: user.username,
+					};
+				})
+			)
+			.flat(1);
 		return results;
 	},
 	getsprintsforproject: async ({ projectid }) => {
