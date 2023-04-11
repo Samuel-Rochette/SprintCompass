@@ -1,7 +1,9 @@
 const schema = `
 type Query {
   getusers: [User],
-  getusersforproject(projectid: String): [User],
+  getusersforproject(projectid: String): [UserProject],
+  getusersfornotproject(projectid: String): [UserProject],
+  getprojectbyid(projectid: String): Project,
   getprojectsforuser(userid: String): [Project],
   getsprintsforproject(projectid: String): [Sprint],
   getstoriesforsprint(sprintid: String): [Story],
@@ -31,6 +33,7 @@ type User {
   userid: String,
   projectid: String,
   role: String,
+  username: String,
  },
  type Sprint {
   _id: String,
