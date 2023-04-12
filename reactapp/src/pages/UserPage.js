@@ -232,6 +232,7 @@ const UserPage = () => {
 						Add User
 					</Typography>
 					<Autocomplete
+						style={styles.formElement}
 						options={state.unassignedUsers}
 						getOptionLabel={option => option.username}
 						onChange={(e, value) => setState({ username: value.username })}

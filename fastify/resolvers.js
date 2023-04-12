@@ -1,3 +1,4 @@
+import { dburl } from "./config.js";
 import * as dbRtns from "./db_routines.js";
 import { ObjectId } from "mongodb";
 
@@ -12,6 +13,29 @@ const resolvers = {
 			_id: new ObjectId(projectid),
 		});
 		return results;
+	},
+	getprojectidbysprintid: async ({ sprintid }) => {
+		const db = await dbRtns.getDBInstance();
+		const projectid = (
+			await dbRtns.findOne(db, "sprints", {
+				_id: new ObjectId(sprintid),
+			})
+		).projectid;
+		return projectid;
+	},
+	getprojectidbystoryid: async ({ storyid }) => {
+		const db = await dbRtns.getDBInstance();
+		const sprintid = (
+			await dbRtns.findOne(db, "stories", {
+				_id: new ObjectId(storyid),
+			})
+		).sprintid;
+		const projectid = (
+			await dbRtns.findOne(db, "sprints", {
+				_id: sprintid,
+			})
+		).projectid;
+		return projectid;
 	},
 	getprojectsforuser: async ({ userid }) => {
 		const db = await dbRtns.getDBInstance();
@@ -101,9 +125,6 @@ const resolvers = {
 	},
 	getstorybyid: async ({ storyid }) => {
 		const db = await dbRtns.getDBInstance();
-		// const results = await dbRtns.findOne(db, "stories", {
-		// 	_id: new ObjectId(storyid),
-		// });
 		const results = (
 			await dbRtns.aggregate(db, "stories", [
 				{
@@ -211,12 +232,20 @@ const resolvers = {
 			hourslogged: 0,
 			hoursestimated,
 		};
+		const user = await dbRtns.findAll(
+			db,
+			"appusers",
+			{
+				_id: new ObjectId(userid),
+			},
+			{}
+		);
 		const { acknowledged, insertedId } = await dbRtns.addOne(
 			db,
 			"stories",
 			newStory
 		);
-		return acknowledged ? { ...newStory, _id: insertedId } : null;
+		return acknowledged ? { ...newStory, user, _id: insertedId } : null;
 	},
 	deletestory: async ({ storyid }) => {
 		const db = await dbRtns.getDBInstance();
@@ -235,6 +264,9 @@ const resolvers = {
 		hourslogged,
 	}) => {
 		const db = await dbRtns.getDBInstance();
+		const user = await dbRtns.findAll(db, "appusers", {
+			_id: new ObjectId(userid),
+		});
 		const newStory = {
 			userid: new ObjectId(userid),
 			name,
@@ -249,7 +281,7 @@ const resolvers = {
 			{ _id: new ObjectId(storyid) },
 			{ $set: newStory }
 		);
-		return acknowledged ? { ...newStory, _id: storyid } : null;
+		return acknowledged ? { ...newStory, _id: storyid, user } : null;
 	},
 	createtask: async ({ storyid, name }) => {
 		const db = await dbRtns.getDBInstance();
