@@ -12,7 +12,8 @@ import {
 	TableBody,
 	TableRow,
 	TableHead,
-	TextInput,
+	Modal,
+	TextField,
 } from "@mui/material";
 import styles from "../styles.js";
 
@@ -50,53 +51,62 @@ const ProjectPage = () => {
 					variables: { projectid: projectId },
 				}
 			);
-			setState({sprints: data.getsprintsforproject});
+			setState({ sprints: data.getsprintsforproject });
 		})();
 	}, []);
 
-	const selectSprint = (id) => {
+	const selectSprint = id => {
 		navigate(`/sprint/${id}`);
 	};
 
 	const returnHome = () => {
-		navigate("/")
-	}
+		navigate("/");
+	};
 
 	return (
 		<Card>
-			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>Sprints for Project {projectId}</h1>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}
-					onClick={setState({openAdd: true})}
+			<Card style={{ display: "flex" }}>
+				<h1 style={{ marginLeft: "2%" }}>Sprints for Project {projectId}</h1>
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "45%",
+						height: "5%",
+						width: "5%",
+					}}
+					onClick={() => setState({ openAdd: true })}
 				>
 					New Sprint
 				</Button>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
-
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 				>
 					Edit Project
 				</Button>
-				<Button 
+				<Button
 					variant="contained"
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 					onClick={returnHome}
 				>
 					Return Home
 				</Button>
 			</Card>
-			<Modal
-				open={state.openAdd}
-				onClose={setState({openAdd: false})}
-			>
-				<TextInput>
-
-				</TextInput>
+			<Modal open={state.openAdd} onClose={() => setState({ openAdd: false })}>
+				<TextField />
 			</Modal>
-			
+
 			{state.sprints.length > 0 && (
 				<TableContainer component={Paper}>
 					<Table aria-label="simple table">
@@ -124,7 +134,7 @@ const ProjectPage = () => {
 				</TableContainer>
 			)}
 		</Card>
-	); 
+	);
 };
 
 export default ProjectPage;

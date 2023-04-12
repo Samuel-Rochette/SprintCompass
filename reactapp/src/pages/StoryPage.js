@@ -16,7 +16,7 @@ import {
 import styles from "../styles.js";
 
 const StoryPage = () => {
-	const {storyId} = useParams();
+	const { storyId } = useParams();
 	const reducer = (state, newState) => ({ ...state, ...newState });
 	const pageLoaded = useRef(false);
 	const [state, setState] = useReducer(reducer, {
@@ -46,26 +46,44 @@ const StoryPage = () => {
 					variables: { story: storyId },
 				}
 			);
-			setState({tasks: data.gettasksforstory });
+			setState({ tasks: data.gettasksforstory });
 		})();
 	}, []);
 
 	return (
 		<Card>
-			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>Stories for Sprint {sprintId}</h1>
-				<Button variant="contained" style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}>
+			<Card style={{ display: "flex" }}>
+				<h1 style={{ marginLeft: "2%" }}>Tasks for {storyId}</h1>
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "45%",
+						height: "5%",
+						width: "5%",
+					}}
+				>
 					New Story
 				</Button>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 				>
 					Edit Story
 				</Button>
-				<Button 
+				<Button
 					variant="contained"
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 				>
 					Return to Sprint
 				</Button>
@@ -86,7 +104,7 @@ const StoryPage = () => {
 									<TableRow
 										style={styles.tableRow}
 										key={task._id}
-										onClick={() => selectStories(task._id)}
+										onClick={() => {}}
 									>
 										<TableCell>{task.name}</TableCell>
 										<TableCell>{task.status}</TableCell>
@@ -99,7 +117,7 @@ const StoryPage = () => {
 				</TableContainer>
 			)}
 		</Card>
-	); 
+	);
 };
 
 export default StoryPage;
