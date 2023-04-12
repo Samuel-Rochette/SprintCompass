@@ -17,9 +17,6 @@ import styles from "../styles.js";
 
 const SprintPage = () => {
 	const {sprintId} = useParams();
-	// console.log(useLocation());
-	// console.log(useParams()); 
-	//const { sprintId} = params.id;
 	const reducer = (state, newState) => ({ ...state, ...newState });
 	const navigate = useNavigate();
 	const pageLoaded = useRef(false);
@@ -53,16 +50,17 @@ const SprintPage = () => {
 					variables: { sprintid: sprintId },
 				}
 			);
-			//console.log(data.getstoriesforsprint);
 			setState({sprints: data.getstoriesforsprint });
 		})();
-		//console.log(sprintId);
-		//console.log(projectId);
 	}, []);
 
 	const selectStories = id => {
 		navigate(`/story/${id}`);
 	};
+
+	const returnHome = () => {
+		navigate("/")
+	}
 
 	return (
 		<Card>
@@ -80,8 +78,9 @@ const SprintPage = () => {
 				<Button 
 					variant="contained"
 					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					onClick={returnHome}
 				>
-					Return to Project
+					Return Home
 				</Button>
 			</Card>
 			{state.stories.length > 0 && (

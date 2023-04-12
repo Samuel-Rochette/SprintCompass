@@ -5,13 +5,14 @@ import jwtDecode from "jwt-decode";
 import {
 	Button,
 	Card,
+	Paper,
 	Table,
 	TableCell,
 	TableContainer,
 	TableBody,
 	TableRow,
 	TableHead,
-	Paper,
+	TextInput,
 } from "@mui/material";
 import styles from "../styles.js";
 
@@ -24,11 +25,13 @@ const ProjectPage = () => {
 		sprints: [],
 		snackbarMsg: "",
 		loginStatus: false,
+		openAdd: false,
+		openEdit: false,
 	});
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
-		const { userId } = jwtDecode(token);
+		//const { userId } = jwtDecode(token);
 		(async () => {
 			const { data } = await graphqlPost(
 				"http://localhost:5000/graphql",
@@ -47,31 +50,53 @@ const ProjectPage = () => {
 					variables: { projectid: projectId },
 				}
 			);
-			console.log(data.getsprintsforproject);
 			setState({sprints: data.getsprintsforproject});
 		})();
-		//console.log(projectId);
-		//console.log(token);
 	}, []);
 
 	const selectSprint = (id) => {
 		navigate(`/sprint/${id}`);
 	};
 
+	const returnHome = () => {
+		navigate("/")
+	}
+
 	return (
 		<Card>
 			<Card style={{display: 'flex'}}>
 				<h1 style={{marginLeft: "2%"}}>Sprints for Project {projectId}</h1>
-				<Button variant="contained" style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}>
+				<Button 
+					variant="contained" 
+					style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}
+					onClick={setState({openAdd: true})}
+				>
 					New Sprint
 				</Button>
-				<Button variant="contained" style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}>
+				<Button 
+					variant="contained" 
+					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+
+				>
 					Edit Project
 				</Button>
-				<Button variant="contained" style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}>
-					Return to Main
+				<Button 
+					variant="contained"
+					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					onClick={returnHome}
+				>
+					Return Home
 				</Button>
 			</Card>
+			<Modal
+				open={state.openAdd}
+				onClose={setState({openAdd: false})}
+			>
+				<TextInput>
+
+				</TextInput>
+			</Modal>
+			
 			{state.sprints.length > 0 && (
 				<TableContainer component={Paper}>
 					<Table aria-label="simple table">
