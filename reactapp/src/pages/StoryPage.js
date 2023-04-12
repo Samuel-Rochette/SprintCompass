@@ -53,7 +53,7 @@ const StoryPage = () => {
 	return (
 		<Card>
 			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>Stories for Sprint {sprintId}</h1>
+				<h1 style={{marginLeft: "2%"}}>Stories for Sprint {storyId}</h1>
 				<Button variant="contained" style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}>
 					New Story
 				</Button>
@@ -86,7 +86,6 @@ const StoryPage = () => {
 									<TableRow
 										style={styles.tableRow}
 										key={task._id}
-										onClick={() => selectStories(task._id)}
 									>
 										<TableCell>{task.name}</TableCell>
 										<TableCell>{task.status}</TableCell>
