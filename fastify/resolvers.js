@@ -284,7 +284,7 @@ const resolvers = {
 			userid: new ObjectId(reqid),
 			projectid: new ObjectId(projectid),
 		});
-		if (results.role !== "Owner") return false;
+		if (!(results.role === "Owner" || results.role === "Admin")) return false;
 		const newJoin = {
 			userid: new ObjectId(userid),
 			projectid: new ObjectId(projectid),
@@ -312,7 +312,7 @@ const resolvers = {
 			userid: new ObjectId(reqid),
 			projectid: new ObjectId(projectid),
 		});
-		if (results.role !== "Owner") return false;
+		if (!(results.role === "Owner" || results.role === "Admin")) return false;
 		const { acknowledged } = await dbRtns.updateOne(
 			db,
 			"userprojects",
