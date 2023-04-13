@@ -12,6 +12,8 @@ type Query {
   getstoriesforsprint(sprintid: String): [Story],
   getstorybyid(storyid: String): Story,
   gettasksforstory(storyid: String): [Task],
+  sprintreport(sprintid: String): SprintReport,
+  userreport(userprojectid: String): UserReport,
 },
 type Mutation {
   createproject(userid: String, name: String, description: String): Project,
@@ -70,5 +72,27 @@ type User {
   status: String,
   storyid: String,
  },
+ type StoryReport {
+  _id: String,
+  name: String,
+  description: String,
+  status: String,
+  hourslogged: Int,
+  hoursestimated: Int,
+  user: [User],
+  tasks: [Task]
+ },
+ type SprintReport {
+  _id: String,
+  projectid: String,
+  name: String,
+  status: String,
+  stories: [StoryReport]
+ }
+ type UserReport {
+  username: String,
+  projectname: String,
+  sprints: [SprintReport]
+ }
 `;
 export { schema };
