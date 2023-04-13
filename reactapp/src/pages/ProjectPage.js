@@ -1,5 +1,6 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, View } from "react";
 import { useParams } from "react-router-dom";
+import SprintPage from "./SprintPage"
 
 const ProjectPage = () => {
 	const { projectId } = useParams();
@@ -10,7 +11,10 @@ const ProjectPage = () => {
 		//TODO: GET ALL STORIES FOR PROJECT ID
 	}, []);
 
-	return <h1>ProjectPage</h1>;
+	return <div>
+			<h1>Project Page</h1>
+			<SprintPage></SprintPage>
+		</div>
 };
 
 export default ProjectPage;

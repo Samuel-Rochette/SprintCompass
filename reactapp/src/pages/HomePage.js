@@ -86,7 +86,7 @@ const HomePage = () => {
 						</TableHead>
 						<TableBody>
 							{state.projects.map(project => {
-								return (
+								return ( 
 									<TableRow
 										style={styles.tableRow}
 										key={project._id}

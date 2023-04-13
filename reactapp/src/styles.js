@@ -11,6 +11,14 @@ export default {
 		padding: "20px",
 		borderRadius: "8px",
 	},
+	modalTextField1:{
+		margin: "5px",
+		width: "45%"
+	},
+	modalTextField2:{
+		margin: "5px",
+		width: "92%"
+	},
 	formElement: {
 		margin: "10px",
 	},
