@@ -355,6 +355,69 @@ const resolvers = {
 		);
 		return acknowledged;
 	},
+	sprintreport: async ({ sprintid }) => {
+		const db = await dbRtns.getDBInstance();
+
+		const { name, status } = await dbRtns.findOne(db, "sprints", {
+			_id: new ObjectId(sprintid),
+		});
+		const stories = await dbRtns.aggregate(db, "stories", [
+			{
+				$match: { sprintid: new ObjectId(sprintid) },
+			},
+			{
+				$lookup: {
+					from: "appusers",
+					localField: "userid",
+					foreignField: "_id",
+					as: "user",
+				},
+			},
+			{
+				$lookup: {
+					from: "tasks",
+					localField: "_id",
+					foreignField: "storyid",
+					as: "tasks",
+				},
+			},
+		]);
+		return { name, status, stories };
+	},
+	userreport: async ({ userprojectid }) => {
+		const db = await dbRtns.getDBInstance();
+		const { userid, projectid } = await dbRtns.findOne(db, "userprojects", {
+			_id: new ObjectId(userprojectid),
+		});
+
+		const { username } = await dbRtns.findOne(db, "appusers", { _id: userid });
+		const { name } = await dbRtns.findOne(db, "projects", { _id: projectid });
+		const sprints = await dbRtns.aggregate(db, "sprints", [
+			{
+				$match: { projectid },
+			},
+			{
+				$lookup: {
+					from: "stories",
+					localField: "_id",
+					foreignField: "sprintid",
+					as: "stories",
+					pipeline: [
+						{ $match: { userid } },
+						{
+							$lookup: {
+								from: "tasks",
+								localField: "_id",
+								foreignField: "storyid",
+								as: "tasks",
+							},
+						},
+					],
+				},
+			},
+		]);
+		return { username, projectname: name, sprints };
+	},
 };
 
 export { resolvers };
