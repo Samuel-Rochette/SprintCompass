@@ -7,6 +7,8 @@ import {
 	SprintPage,
 	StoryPage,
 	UserPage,
+	SprintReportPage,
+	UserReportPage,
 } from "./pages";
 
 const App = () => {
@@ -26,6 +28,12 @@ const App = () => {
 				</Route>
 				<Route path="users">
 					<Route path=":projectId" element={<UserPage />} />
+				</Route>
+				<Route path="sprintreport">
+					<Route path=":sprintId" element={<SprintReportPage />} />
+				</Route>
+				<Route path="userreport">
+					<Route path=":userprojectId" element={<UserReportPage />} />
 				</Route>
 			</Routes>
 		</Router>
