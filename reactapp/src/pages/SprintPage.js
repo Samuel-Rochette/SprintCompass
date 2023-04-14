@@ -42,8 +42,8 @@ const SprintPage = () => {
 	const [modalHours		, setModalHours			] = useState();
 	
 
-	const selectSprint = id => {
-		navigate(`/sprint/${id}`);
+	const selectStory = id => {
+		navigate(`/story/${id}`);
 	};
 
 	// --------------------------------- MODAL OPEN AND ADD STORY -----------------------------------------
@@ -169,8 +169,8 @@ const SprintPage = () => {
 					<TableRow>
 						<TableCell>Name</TableCell>
 						<TableCell>Description</TableCell>
-						<TableCell>status</TableCell>
-						<TableCell>hourslogged</TableCell>
+						<TableCell>Status</TableCell>
+						<TableCell>Assigned To</TableCell>
 					</TableRow>
 				</TableHead>
 				<TableBody>
@@ -179,12 +179,12 @@ const SprintPage = () => {
 							<TableRow
 								style={styles.tableRow}
 								key={story._id}
-								onClick={() => selectSprint(story._id)}
+								onClick={() => selectStory(story._id)}
 							>
 								<TableCell>{story.name}</TableCell>
 								<TableCell>{story.description}</TableCell>
 								<TableCell>{story.status}</TableCell>
-								<TableCell>{story.hoursestimated}</TableCell>
+								<TableCell>{story.user[0].username}</TableCell>
 							</TableRow>
 						);
 					})}

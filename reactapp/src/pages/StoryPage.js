@@ -250,6 +250,31 @@ const StoryPage = () => {
 		}
 	};
 
+	const deleteStory = async () => {
+		const token = localStorage.getItem("token");
+		!token && navigate("/");
+
+		const { data } = await graphqlPost(
+			"http://localhost:5000/graphql",
+			token,
+			{
+				query: `
+				mutation ($storyid: String) { 
+					deletestory (
+						storyid: $storyid) 
+					}
+			`,
+			
+				variables: {
+					storyid: storyId
+				},
+			}
+		);
+		if(!data.deleteStory) return;
+		navigate("/");
+
+	}
+
 	return (
 		<Card>
 			<Card style={{ display: "flex" }}>
@@ -494,7 +519,7 @@ const StoryPage = () => {
 						>
 							Cancel
 						</Button>
-						<Button style={styles.formElement} onClick={() => {}}>
+						<Button style={styles.formElement} onClick={deleteStory}>
 							Delete
 						</Button>
 						<Button style={styles.formElement} onClick={updateStory}>
