@@ -35,7 +35,7 @@ const SprintPage = () => {
 		storyStatus: "",
 		storyHours: ""
 	});
-	const [openModal		, setOpenModal			] = useState();
+	const [openModal		, setOpenModal			] = useState(false);
 	const [modalName		, setModalName			] = useState();
 	const [modalDescription	, setModalDescription	] = useState();
 	const [modalStatus		, setModalStatus		] = useState();
@@ -57,10 +57,11 @@ const SprintPage = () => {
 	const handleModalClose = async ()=>{
 		setOpenModal(false);
 		//console.log(state.storyName + "  " + state.storyDescription);
-
+		console.log("entered add story");
 		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
+		if (!token) return;
+		console.log("Token is good.");
+		const {data} = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
 			mutation ($userid: String, $sprintid: String, $name: String, $description: String, $hoursestimated: Int) { 
 				createstory (
@@ -85,10 +86,9 @@ const SprintPage = () => {
 			`,
 			variables: {
 				sprintid: sprintId,
-				storyname: state.storyName,
+				name: state.storyName,
 				description: state.storyDescription,
-				status: state.storyStatus,
-				hours: state.storyHours
+				hoursestimated: parseInt(state.storyHours)
 			},
 		});
 		if(data.createstory === undefined || data.createstory === null) return;
@@ -96,7 +96,6 @@ const SprintPage = () => {
 			{
 				_id: data.createstory._id,
 				storyname: data.createstory.name,
-				status: data.createstory.status,
 				sprintid: sprintId,
 			}
 		])
@@ -109,7 +108,7 @@ const SprintPage = () => {
 		if (!token || pageLoaded.current) return;
 		const { userId } = jwtDecode(token);
 		(async () => {
-			const result = await graphqlPost(
+			const {data} = await graphqlPost(
 				"http://localhost:5000/graphql",
 				token,
 				{
@@ -122,7 +121,7 @@ const SprintPage = () => {
 							name, 
 							description, 
 							status, 
-							hourslogged, 
+							hoursestimated, 
 							user { 
 								username 
 							} 
@@ -132,9 +131,8 @@ const SprintPage = () => {
 			 		variables: { sprintid: sprintId },
 				}
 			);
-			console.log(result);
-			// console.log(data);
-			// setState({ stories: data.getstoriesforsprint, loginStatus: true });
+			console.log(data);
+			setState({ stories: data.getstoriesforsprint, loginStatus: true });
 		})();
 		pageLoaded.current = true;
 	}, []);//end of useEffect
@@ -157,7 +155,6 @@ const SprintPage = () => {
 				</Typography>
 				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyName 		: e.target.value		})} helperText="required field" id="filled-basic" label="Story Name" variant="filled" />
 				<TextField  style={styles.modalTextField2} onChange={(e) => setState({ storyDescription : e.target.value})} helperText="required field" multiline id="filled-basic" label="Story Description" variant="filled" />
-				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyStatus 		: e.target.value		})} helperText="required field" id="filled-basic" label="Story Status" variant="filled" />
 				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyHours 		: e.target.value		})} id="filled-basic" label="Hours Logged" variant="filled" />
 
 				
@@ -187,7 +184,7 @@ const SprintPage = () => {
 								<TableCell>{story.name}</TableCell>
 								<TableCell>{story.description}</TableCell>
 								<TableCell>{story.status}</TableCell>
-								<TableCell>{story.hours}</TableCell>
+								<TableCell>{story.hoursestimated}</TableCell>
 							</TableRow>
 						);
 					})}
