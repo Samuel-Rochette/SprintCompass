@@ -1,124 +1,200 @@
-import { useEffect, useReducer, useState, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { graphqlPost } from "../util";
+
+import { useReducer, useEffect, useRef, useState, View } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import jwtDecode from "jwt-decode";
 import {
-	Button,
-	Card,
+	Grid,
+	Typography,
 	Table,
+	TableBody,
 	TableCell,
 	TableContainer,
-	TableBody,
-	TableRow,
 	TableHead,
+	TableRow,
 	Paper,
+	Button,
+	Modal,
+	Box,
+	TextField,
+	Snackbar,
 } from "@mui/material";
 import styles from "../styles.js";
+import { graphqlPost } from "../util";
 
 const SprintPage = () => {
-	const {sprintId} = useParams();
 	const reducer = (state, newState) => ({ ...state, ...newState });
 	const navigate = useNavigate();
+	const {sprintId} = useParams();
 	const pageLoaded = useRef(false);
 	const [state, setState] = useReducer(reducer, {
 		stories: [],
 		snackbarMsg: "",
 		loginStatus: false,
+		storyName: "",
+		storyDescription: "",
+		storyStatus: "",
+		storyHours: ""
 	});
+	const [openModal		, setOpenModal			] = useState(false);
+	const [modalName		, setModalName			] = useState();
+	const [modalDescription	, setModalDescription	] = useState();
+	const [modalStatus		, setModalStatus		] = useState();
+	const [modalHours		, setModalHours			] = useState();
+	
+
+	const selectStory = id => {
+		navigate(`/story/${id}`);
+	};
+
+	// --------------------------------- MODAL OPEN AND ADD STORY -----------------------------------------
+	const handleAddStory = () =>{
+		console.log("clicked add story");
+		setOpenModal(true);
+		
+	}
+
+	// --------------------------------- MODAL CLOSE AND CREATE STORY -----------------------------------------
+	const handleModalClose = async ()=>{
+		setOpenModal(false);
+		//console.log(state.storyName + "  " + state.storyDescription);
+		console.log("entered add story");
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		console.log("Token is good.");
+		const {data} = await graphqlPost("http://localhost:5000/graphql", token, {
+			query: `
+			mutation ($userid: String, $sprintid: String, $name: String, $description: String, $hoursestimated: Int) { 
+				createstory (
+					userid: $userid, 
+					sprintid: $sprintid, 
+					name: $name, 
+					description: $description, 
+					hoursestimated: $hoursestimated) { 
+						_id, 
+						sprintid, 
+						userid, 
+						name, 
+						description, 
+						status, 
+						hourslogged, 
+						hoursestimated, 
+						user { 
+							username 
+						} 
+					} 
+				}
+			`,
+			variables: {
+				sprintid: sprintId,
+				name: state.storyName,
+				description: state.storyDescription,
+				hoursestimated: parseInt(state.storyHours)
+			},
+		});
+		if(data.createstory === undefined || data.createstory === null) return;
+		const stories = state.stories.concat([
+			{
+				_id: data.createstory._id,
+				storyname: data.createstory.name,
+				sprintid: sprintId,
+			}
+		])
+		setState({ stories, openAdd: false });
+	}//end of add story
+
+	// --------------------------------- USE EFFECT -----------------------------------------
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
 		const { userId } = jwtDecode(token);
 		(async () => {
-			const { data } = await graphqlPost(
+			const {data} = await graphqlPost(
 				"http://localhost:5000/graphql",
 				token,
 				{
 					query: `
-						query($sprintid: String) {
-							getstoriesforsprint(sprintid: $sprintid) {
-								_id
-								name
-								description
-								status
-								sprintid
-								userid
-								hourslogged
-							}
-						}
-					`,
-					variables: { sprintid: sprintId },
+					query ($sprintid: String) { 
+						getstoriesforsprint (sprintid: $sprintid) { 
+							_id, 
+							sprintid, 
+							userid, 
+							name, 
+							description, 
+							status, 
+							hoursestimated, 
+							user { 
+								username 
+							} 
+						} 
+					}
+			 		`,
+			 		variables: { sprintid: sprintId },
 				}
 			);
-			setState({sprints: data.getstoriesforsprint });
+			console.log(data);
+			setState({ stories: data.getstoriesforsprint, loginStatus: true });
 		})();
-	}, []);
+		pageLoaded.current = true;
+	}, []);//end of useEffect
 
-	const selectStories = id => {
-		navigate(`/story/${id}`);
-	};
 
-	const returnHome = () => {
-		navigate("/")
-	}
 
-	return (
-		<Card>
-			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>Stories for Sprint {sprintId}</h1>
-				<Button variant="contained" style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "5%"}}>
-					New Sprint
-				</Button>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
-				>
-					Edit Sprint
-				</Button>
-				<Button 
-					variant="contained"
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
-					onClick={returnHome}
-				>
-					Return Home
-				</Button>
-			</Card>
-			{state.stories.length > 0 && (
-				<TableContainer component={Paper}>
-					<Table aria-label="simple table">
-						<TableHead>
-							<TableRow>
-								<TableCell>Name</TableCell>
-								<TableCell>Description</TableCell>
-								<TableCell>Status</TableCell>
-								<TableCell>Sprint ID</TableCell>
-								<TableCell>User ID</TableCell>
-								<TableCell>Hours Logged</TableCell>
+	// --------------------------------- RETURN START -----------------------------------------
+	return <div>
+	<Box>
+		<h3>Sprint Info</h3>
+		<Button onClick={handleAddStory}>Add Story</Button>
+		<Modal
+			open={openModal}
+			aria-labelledby="modal-modal-title"
+			aria-describedby="modal-modal-description"
+			>
+			<Box style={styles.modal}>
+				<Typography id="modal-modal-title" variant="h5" component="h2">
+				New Story Item
+				</Typography>
+				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyName 		: e.target.value		})} helperText="required field" id="filled-basic" label="Story Name" variant="filled" />
+				<TextField  style={styles.modalTextField2} onChange={(e) => setState({ storyDescription : e.target.value})} helperText="required field" multiline id="filled-basic" label="Story Description" variant="filled" />
+				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyHours 		: e.target.value		})} id="filled-basic" label="Hours Logged" variant="filled" />
+
+				
+
+			<Button onClick={handleModalClose}>Done</Button>
+			</Box>
+		</Modal>
+	</Box>
+	<TableContainer component={Paper}>
+			<Table aria-label="simple table">
+				<TableHead>
+					<TableRow>
+						<TableCell>Name</TableCell>
+						<TableCell>Description</TableCell>
+						<TableCell>Status</TableCell>
+						<TableCell>Assigned To</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					{state.stories.map(story => {
+						return (
+							<TableRow
+								style={styles.tableRow}
+								key={story._id}
+								onClick={() => selectStory(story._id)}
+							>
+								<TableCell>{story.name}</TableCell>
+								<TableCell>{story.description}</TableCell>
+								<TableCell>{story.status}</TableCell>
+								<TableCell>{story.user[0].username}</TableCell>
 							</TableRow>
-						</TableHead>
-						<TableBody>
-							{state.stories.map(story => {
-								return (
-									<TableRow
-										style={styles.tableRow}
-										key={story._id}
-										onClick={() => selectStories(story._id)}
-									>
-										<TableCell>{story.name}</TableCell>
-										<TableCell>{story.description}</TableCell>
-										<TableCell>{story.name}</TableCell>
-										<TableCell>{story.sprintid}</TableCell>
-										<TableCell>{story.userid}</TableCell>
-										<TableCell>{story.hourslogged}</TableCell>
-									</TableRow>
-								);
-							})}
-						</TableBody>
-					</Table>
-				</TableContainer>
-			)}
-		</Card>
-	); 
+						);
+					})}
+				</TableBody>
+			</Table>
+		</TableContainer>
+</div>;
 };
 
 export default SprintPage;
+
+
+
