@@ -109,7 +109,7 @@ const SprintPage = () => {
 		if (!token || pageLoaded.current) return;
 		const { userId } = jwtDecode(token);
 		(async () => {
-			const { data } = await graphqlPost(
+			const result = await graphqlPost(
 				"http://localhost:5000/graphql",
 				token,
 				{
@@ -122,15 +122,19 @@ const SprintPage = () => {
 							name, 
 							description, 
 							status, 
-							hourslogged 
+							hourslogged, 
+							user { 
+								username 
+							} 
 						} 
 					}
-					`,
-					variables: { sprintid: sprintId },
+			 		`,
+			 		variables: { sprintid: sprintId },
 				}
 			);
-			console.log(data);
-			setState({ stories: data.getstoriesforsprint, loginStatus: true });
+			console.log(result);
+			// console.log(data);
+			// setState({ stories: data.getstoriesforsprint, loginStatus: true });
 		})();
 		pageLoaded.current = true;
 	}, []);//end of useEffect
@@ -151,10 +155,10 @@ const SprintPage = () => {
 				<Typography id="modal-modal-title" variant="h5" component="h2">
 				New Story Item
 				</Typography>
-				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyName : e.target.value		})} helperText="required field" id="filled-basic" label="Story Name" variant="filled" />
+				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyName 		: e.target.value		})} helperText="required field" id="filled-basic" label="Story Name" variant="filled" />
 				<TextField  style={styles.modalTextField2} onChange={(e) => setState({ storyDescription : e.target.value})} helperText="required field" multiline id="filled-basic" label="Story Description" variant="filled" />
-				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyStatus : e.target.value		})} helperText="required field" id="filled-basic" label="Story Status" variant="filled" />
-				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyHours : e.target.value		})} id="filled-basic" label="Hours Logged" variant="filled" />
+				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyStatus 		: e.target.value		})} helperText="required field" id="filled-basic" label="Story Status" variant="filled" />
+				<TextField  style={styles.modalTextField1} onChange={(e) => setState({ storyHours 		: e.target.value		})} id="filled-basic" label="Hours Logged" variant="filled" />
 
 				
 
@@ -182,6 +186,8 @@ const SprintPage = () => {
 							>
 								<TableCell>{story.name}</TableCell>
 								<TableCell>{story.description}</TableCell>
+								<TableCell>{story.status}</TableCell>
+								<TableCell>{story.hours}</TableCell>
 							</TableRow>
 						);
 					})}
