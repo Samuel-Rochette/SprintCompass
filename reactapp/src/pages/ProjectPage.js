@@ -70,6 +70,11 @@ const ProjectPage = () => {
 		navigate("/")
 	}
 
+	
+	const addUser = () => {
+		navigate(`/users/${projectId}`)
+	}
+
 	const addSprint = async () => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
@@ -153,7 +158,7 @@ const ProjectPage = () => {
 				<h1 style={{marginLeft: "2%"}}>Sprints for Project {projectId}</h1>
 				<Button 
 					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "45%", height: "5%", width: "6%"}}
+					style={{marginTop: "1%", marginLeft: "3+5%", height: "5%", width: "6%"}}
 					onClick={() => setState({openAdd: true})}
 				>
 					New Sprint
@@ -164,6 +169,13 @@ const ProjectPage = () => {
 					onClick={() => setState({openEdit: true})}
 				>
 					Edit Sprint
+				</Button>
+				<Button 
+					variant="contained"
+					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					onClick={addUser}
+				>
+					Add User
 				</Button>
 				<Button 
 					variant="contained"
