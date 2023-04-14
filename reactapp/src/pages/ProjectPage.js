@@ -158,7 +158,7 @@ const ProjectPage = () => {
 				<h1 style={{marginLeft: "2%"}}>Sprints for Project {projectId}</h1>
 				<Button 
 					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "3+5%", height: "5%", width: "6%"}}
+					style={{marginTop: "1%", marginLeft: "35%", height: "5%", width: "6%"}}
 					onClick={() => setState({openAdd: true})}
 				>
 					New Sprint
