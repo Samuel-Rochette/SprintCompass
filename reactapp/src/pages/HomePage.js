@@ -75,7 +75,7 @@ const HomePage = () => {
 					</Grid>
 				)}
 			</Grid>
-			{state.loginStatus && state.projects.length !== 0 && (
+			{state.loginStatus && state.projects.length !== 0 ? (
 				<TableContainer component={Paper}>
 					<Table aria-label="simple table">
 						<TableHead>
@@ -96,11 +96,16 @@ const HomePage = () => {
 										<TableCell>{project.description}</TableCell>
 									</TableRow>
 								);
-							})}
+							}) }
 						</TableBody>
 					</Table>
 				</TableContainer>
-			)}
+			) : ( // -------- HOME PAGE USER LOGGED IN --------------------
+				<div>
+					
+				</div>
+			)
+		}
 		</div>
 	);
 };
