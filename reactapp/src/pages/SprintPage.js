@@ -195,6 +195,18 @@ const SprintPage = () => {
 						height: "5%",
 						width: "5%",
 					}}
+					onClick={() => navigate(`/sprintreport/${state.sprint._id}`)}
+				>
+					Report
+				</Button>
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 					onClick={() => setState({ openAdd: true })}
 				>
 					Add Story

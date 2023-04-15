@@ -1,23 +1,8 @@
 import { useEffect, useReducer, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { graphqlPost } from "../util/index.js";
-import styles from "../styles.js";
-import {
-	Autocomplete,
-	Box,
-	Button,
-	Card,
-	Modal,
-	Paper,
-	Table,
-	TableCell,
-	TableContainer,
-	TableBody,
-	TableRow,
-	TableHead,
-	TextField,
-	Typography,
-} from "@mui/material";
+import jwtDecode from "jwt-decode";
+import { Button, Card, Typography } from "@mui/material";
 
 const SprintReportPage = () => {
 	const { sprintId } = useParams();
@@ -27,107 +12,160 @@ const SprintReportPage = () => {
 	const [state, setState] = useReducer(reducer, {
 		report: {},
 		stories: [],
+		auth: false,
 	});
 
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
+		const { userId } = jwtDecode(token);
 		(async () => {
 			const { data } = await graphqlPost(
 				"http://localhost:5000/graphql",
 				token,
 				{
 					query: `
-            query ($sprintid: String) {
-              sprintreport(sprintid: $sprintid) {
-                name
-                status
-                stories { 
-                  name
-                  description
-                  status
-                  hourslogged
-                  hoursestimated
-                  user { 
-                    username 
-                  }
-                  tasks {
-                    name
-                    status 
-                  } 
-                } 
-              } 
-            }
+						query ($sprintid: String) { sprintreport (sprintid: $sprintid) { projectid, name, status, stories { name, description, status, cost, user { username }, tasks { name, status, hourslogged, hoursestimated } } } }
 		      `,
 					variables: { sprintid: sprintId },
 				}
 			);
-			setState({ report: data.sprintreport, stories: data.sprintreport.stories });
-			console.log(data.sprintreport);
+			const auth = (
+				await graphqlPost("http://localhost:5000/graphql", token, {
+					query: `
+						query ($reqid: String, $projectid: String) { getauth (reqid: $reqid, projectid: $projectid) }		      
+					`,
+					variables: { reqid: userId, projectid: data.sprintreport.projectid },
+				})
+			).data.getauth;
+			setState({
+				report: data.sprintreport,
+				stories: data.sprintreport.stories,
+				auth,
+			});
 		})();
-
 		pageLoaded.current = true;
 	}, []);
 
 	const returnHome = () => {
-		navigate("/")
-	}
+		navigate("/");
+	};
 
 	return (
 		<div>
-			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>{state.report.name} Report</h1>
-				<Button 
+			<Card style={{ display: "flex" }}>
+				<h1 style={{ marginLeft: "2%" }}>{state.report.name} Report</h1>
+				<Button
 					variant="contained"
-					style={{marginTop: "1%", marginLeft: "80%", height: "5%", width: "8%"}}
+					style={{
+						marginTop: "1%",
+						marginLeft: "80%",
+						height: "5%",
+						width: "8%",
+					}}
 					onClick={returnHome}
 				>
 					Return Home
 				</Button>
 			</Card>
+
+			{state.auth ? (
 				<Card>
 					{state.stories.length > 0 && (
-						<div style={{marginLeft: "5%"}}>
-							{state.stories.map(story => {
+						<div style={{ marginLeft: "5%" }}>
+							{state.stories.map((story, sidx) => {
 								return (
-									<div key={state.index++}>
-										<Typography style={{textDecorationLine: "underline", fontWeight: "bold", fontSize: 20}}>
-										{story.name}
+									<div key={sidx}>
+										<Typography
+											style={{
+												textDecorationLine: "underline",
+												fontWeight: "bold",
+												fontSize: 20,
+											}}
+										>
+											{story.name}
 										</Typography>
-										<Typography style={{marginLeft: "2%"}}>
+										<Typography style={{ marginLeft: "2%" }}>
 											<b>Status:</b> {story.status}
 										</Typography>
-										<Typography style={{marginLeft: "2%"}}>
+										<Typography style={{ marginLeft: "2%" }}>
 											<b>Description:</b> {story.description}
 										</Typography>
-										<Typography style={{marginLeft: "2%"}}>
-											<b>Hours Estimated:</b> {story.hoursestimated}
+
+										<Typography style={{ marginLeft: "2%" }}>
+											<b>Hours Logged:</b>{" "}
+											{story.tasks.length > 0
+												? story.tasks
+														.map(i => i.hourslogged)
+														.reduce((a, b) => a + b)
+												: "0"}
 										</Typography>
-										<Typography style={{marginLeft: "2%"}}>
-											<b>Hours Logged:</b> {story.hourslogged}
+										<Typography style={{ marginLeft: "2%" }}>
+											<b>Hours Estimated:</b>{" "}
+											{story.tasks.length > 0
+												? story.tasks
+														.map(i => i.hoursestimated)
+														.reduce((a, b) => a + b)
+												: "0"}
 										</Typography>
-										{story.tasks.map(task => {
+										<Typography style={{ marginLeft: "2%" }}>
+											<b>Cost/hr:</b> {story.cost}
+										</Typography>
+										<Typography style={{ marginLeft: "2%" }}>
+											<b>Total Estimated Cost:</b>{" "}
+											{story.tasks.length > 0
+												? story.tasks
+														.map(i => i)
+														.reduce(
+															(a, b) =>
+																a.hourslogged +
+																a.hoursestimated +
+																b.hourslogged +
+																b.hoursestimated
+														) * story.cost
+												: "0"}
+										</Typography>
+										{story.tasks.map((task, tidx) => {
 											return (
-												<div key={state.storyKey++} style={{marginLeft: "10%"}}>
-													<br/>
-													<Typography style={{fontWeight: "bold"}}>
+												<div key={tidx} style={{ marginLeft: "10%" }}>
+													<br />
+													<Typography style={{ fontWeight: "bold" }}>
 														{task.name}
 													</Typography>
-													<Typography style={{marginLeft: "5%"}}>
+													<Typography style={{ marginLeft: "5%" }}>
 														Status: {task.status}
 													</Typography>
+													<Typography style={{ marginLeft: "5%" }}>
+														Hours Logged: {task.hourslogged}
+													</Typography>
+													<Typography style={{ marginLeft: "5%" }}>
+														Hours Estimated: {task.hoursestimated}
+													</Typography>
 												</div>
-											)
+											);
 										})}
-										<br/>
+										<br />
 									</div>
-								)
+								);
 							})}
 						</div>
 					)}
 				</Card>
+			) : (
+				<div>
+					<Typography
+						style={{
+							textDecorationLine: "underline",
+							fontWeight: "bold",
+							fontSize: 20,
+						}}
+					>
+						Not Authorized for Sprint Report
+					</Typography>
+				</div>
+			)}
 		</div>
-	)
+	);
 };
 
 export default SprintReportPage;

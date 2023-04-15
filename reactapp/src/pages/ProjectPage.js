@@ -1,9 +1,7 @@
 import { useEffect, useReducer, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { graphqlPost } from "../util";
-import jwtDecode from "jwt-decode";
 import {
-	Autocomplete,
 	Box,
 	Button,
 	Card,
@@ -36,7 +34,6 @@ const ProjectPage = () => {
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
-		//const { userId } = jwtDecode(token);
 		(async () => {
 			const { data } = await graphqlPost(
 				"http://localhost:5000/graphql",
@@ -55,7 +52,7 @@ const ProjectPage = () => {
 					variables: { projectid: projectId },
 				}
 			);
-			setState({sprints: data.getsprintsforproject});
+			setState({ sprints: data.getsprintsforproject });
 		})();
 
 		(async () => {
@@ -66,6 +63,7 @@ const ProjectPage = () => {
 					query: `
 						query($projectid: String) {
 							getprojectbyid(projectid: $projectid) {
+								_id
 								name
 								description
 							}
@@ -78,95 +76,13 @@ const ProjectPage = () => {
 		})();
 	}, []);
 
-	const selectSprint = (id) => {
+	const selectSprint = id => {
 		navigate(`/sprint/${id}`);
 	};
 
 	const returnHome = () => {
-		navigate("/")
-	}
-
-	
-	const addUser = () => {
-		navigate(`/users/${projectId}`)
-	}
-
-	const addSprint = async () => {
-		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
-			query: `
-				mutation($projectid: String, $name: String) {
-					createsprint(projectid: $projectid, name: $name ) {
-						_id
-						name
-						status
-						projectid
-					} 
-				}
-			`,
-			variables: {
-				projectid: projectId,
-				name: state.sprintName,
-			},
-		});
-		if(data.createsprint === undefined || data.createsprint === null) return;
-		const sprints = state.sprints.concat([
-			{
-				_id: data.createsprint._id,
-				name: data.createsprint.name,
-				status: data.createsprint.status,
-				projectid: projectId,
-			}
-		])
-		setState({ sprints, openAdd: false });
-	}
-
-	const editSprint = async (sprints) => {
-		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const sprint = sprints.find(sprint => sprint.name === state.sprintName);
-		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
-			query: `
-				mutation($sprintid: String, $name: String, $status: String) {
-					editsprint(sprintid: $sprintid, name: $name, status: $status ) {
-						_id
-						name
-						status
-						projectid
-					} 
-				}
-			`,
-			variables: {
-				sprintid: sprint._id,
-				name: state.sprintName,
-				status: state.sprintStatus,
-			},
-		});
-		const array = state.sprints.map((s) => {if (s.name === state.sprintName) {return data.editsprint;} else {return s;}});
-		setState({ openEdit: false, sprints: array});
-	}
-
-	const deleteSprint = async (sprints) => {
-		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const sprint = sprints.find(sprint => sprint.name === state.sprintName);
-		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
-			query: `
-				mutation($sprintid: String) {
-					deletesprint(sprintid: $sprintid)
-				}
-			`,
-			variables: {
-				sprintid: sprint._id,
-			},
-		});
-		if(!data.deletesprint) return;
-		setState({ 
-			openEdit: false,
-			sprints: state.sprints.filter((e) => e !== sprint ),
-		});
-	}
+		navigate("/");
+	};
 
 	const addSprint = async () => {
 		const token = localStorage.getItem("token");
@@ -242,18 +158,23 @@ const ProjectPage = () => {
 						height: "5%",
 						width: "6%",
 					}}
+					onClick={() => navigate(`/users/${state.project._id}`)}
+				>
+					Users
+				</Button>
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 					onClick={() => setState({ openAdd: true })}
 				>
 					New Sprint
 				</Button>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
-					onClick={() => setState({openEdit: true})}
-				>
-					Edit Sprint
-				</Button>
-				<Button 
+				<Button
 					variant="contained"
 					style={{
 						marginTop: "1%",
@@ -263,11 +184,16 @@ const ProjectPage = () => {
 					}}
 					onClick={() => setState({ ...state.project, openEdit: true })}
 				>
-					Add User
+					Edit Project
 				</Button>
-				<Button 
+				<Button
 					variant="contained"
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
 					onClick={returnHome}
 				>
 					Return Home
@@ -360,7 +286,7 @@ const ProjectPage = () => {
 				</TableContainer>
 			)}
 		</Card>
-	); 
+	);
 };
 
 export default ProjectPage;

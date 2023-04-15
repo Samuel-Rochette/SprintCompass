@@ -3,6 +3,14 @@ import * as dbRtns from "./db_routines.js";
 import { ObjectId } from "mongodb";
 
 const resolvers = {
+	getauth: async ({ reqid, projectid }) => {
+		const db = await dbRtns.getDBInstance();
+		const results = await dbRtns.findOne(db, "userprojects", {
+			userid: new ObjectId(reqid),
+			projectid: new ObjectId(projectid),
+		});
+		return results.role === "Owner" || results.role === "Admin";
+	},
 	getusers: async () => {
 		const db = await dbRtns.getDBInstance();
 		return await dbRtns.findAll(db, "appusers", {});
@@ -368,7 +376,7 @@ const resolvers = {
 	sprintreport: async ({ sprintid }) => {
 		const db = await dbRtns.getDBInstance();
 
-		const { name, status } = await dbRtns.findOne(db, "sprints", {
+		const { name, status, projectid } = await dbRtns.findOne(db, "sprints", {
 			_id: new ObjectId(sprintid),
 		});
 		const stories = await dbRtns.aggregate(db, "stories", [
@@ -392,7 +400,7 @@ const resolvers = {
 				},
 			},
 		]);
-		return { name, status, stories };
+		return { name, status, stories, projectid };
 	},
 	userreport: async ({ userprojectid }) => {
 		const db = await dbRtns.getDBInstance();
@@ -401,7 +409,9 @@ const resolvers = {
 		});
 
 		const { username } = await dbRtns.findOne(db, "appusers", { _id: userid });
-		const { name } = await dbRtns.findOne(db, "projects", { _id: projectid });
+		const { name, _id } = await dbRtns.findOne(db, "projects", {
+			_id: projectid,
+		});
 		const sprints = await dbRtns.aggregate(db, "sprints", [
 			{
 				$match: { projectid },
@@ -426,7 +436,7 @@ const resolvers = {
 				},
 			},
 		]);
-		return { username, projectname: name, sprints };
+		return { projectid: _id, username, projectname: name, sprints };
 	},
 };
 

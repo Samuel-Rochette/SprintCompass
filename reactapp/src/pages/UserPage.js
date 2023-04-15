@@ -284,6 +284,14 @@ const UserPage = () => {
 						<Button style={styles.formElement} onClick={assignRole}>
 							Assign
 						</Button>
+						<Button
+							style={styles.formElement}
+							onClick={() =>
+								navigate(`/userreport/${state.users[state.selectedUser]._id}`)
+							}
+						>
+							Report
+						</Button>
 					</Box>
 				</Box>
 			</Modal>

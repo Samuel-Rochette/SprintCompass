@@ -97,13 +97,13 @@ const HomePage = () => {
 
 	return (
 		<div>
-			<Grid style={styles.headerContainer} container spacing={2}>
-				<Grid item xs={10}>
-					<Typography variant="h4" component="h2">
-						{state.loginStatus ? "My Projects" : "Home Page"}
-					</Typography>
-				</Grid>
-				{state.loginStatus && (
+			{state.loginStatus && (
+				<Grid style={styles.headerContainer} container spacing={2}>
+					<Grid item xs={10}>
+						<Typography variant="h4" component="h2">
+							My Projects
+						</Typography>
+					</Grid>
 					<Grid item xs={2}>
 						<Button
 							variant="contained"
@@ -112,8 +112,8 @@ const HomePage = () => {
 							Create Project
 						</Button>
 					</Grid>
-				)}
-			</Grid>
+				</Grid>
+			)}
 			{state.loginStatus && state.projects.length !== 0 ? (
 				<TableContainer component={Paper}>
 					<Table aria-label="simple table">
