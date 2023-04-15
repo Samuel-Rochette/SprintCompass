@@ -135,17 +135,19 @@ const HomePage = () => {
 										<TableCell>{project.description}</TableCell>
 									</TableRow>
 								);
-							}) }
+							})}
 						</TableBody>
 					</Table>
 				</TableContainer>
-			) : ( // -------- HOME PAGE USER LOGGED IN --------------------
+			) : (
 				<div style={styles.container}>
 					<h2>Welcome to Sprint Compass!</h2>
-					<img  style={styles.image} src='./sprint-compass-logo.png' alt="logo"/>
+					<img
+						style={styles.image}
+						src="./sprint-compass-logo.png"
+						alt="logo"
+					/>
 				</div>
-			)
-		}
 			)}
 			<Modal
 				open={state.openAdd}
