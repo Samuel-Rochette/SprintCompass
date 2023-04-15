@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef } from "react";
+import { useReducer, useEffect, useRef, Image } from "react";
 import { useNavigate } from "react-router-dom";
 import jwtDecode from "jwt-decode";
 import {
@@ -114,7 +114,7 @@ const HomePage = () => {
 					</Grid>
 				)}
 			</Grid>
-			{state.loginStatus && state.projects.length !== 0 && (
+			{state.loginStatus && state.projects.length !== 0 ? (
 				<TableContainer component={Paper}>
 					<Table aria-label="simple table">
 						<TableHead>
@@ -135,10 +135,17 @@ const HomePage = () => {
 										<TableCell>{project.description}</TableCell>
 									</TableRow>
 								);
-							})}
+							}) }
 						</TableBody>
 					</Table>
 				</TableContainer>
+			) : ( // -------- HOME PAGE USER LOGGED IN --------------------
+				<div style={styles.container}>
+					<h2>Welcome to Sprint Compass!</h2>
+					<img  style={styles.image} src='./sprint-compass-logo.png' alt="logo"/>
+				</div>
+			)
+		}
 			)}
 			<Modal
 				open={state.openAdd}
