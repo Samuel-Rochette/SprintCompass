@@ -27,14 +27,11 @@ const ProjectPage = () => {
 	const pageLoaded = useRef(false);
 	const [state, setState] = useReducer(reducer, {
 		sprints: [],
-		sprintid: "",
-		snackbarMsg: "",
-		loginStatus: false,
+		project: {},
 		openAdd: false,
 		openEdit: false,
-		sprintName: "",
-		sprintStatus: "",
-		index: 0,
+		name: "",
+		description: "",
 	});
 	useEffect(() => {
 		const token = localStorage.getItem("token");
@@ -60,6 +57,25 @@ const ProjectPage = () => {
 			);
 			setState({ sprints: data.getsprintsforproject });
 		})();
+
+		(async () => {
+			const { data } = await graphqlPost(
+				"http://localhost:5000/graphql",
+				token,
+				{
+					query: `
+						query($projectid: String) {
+							getprojectbyid(projectid: $projectid) {
+								name
+								description
+							}
+						}
+					`,
+					variables: { projectid: projectId },
+				}
+			);
+			setState({ project: data.getprojectbyid });
+		})();
 	}, []);
 
 	const selectSprint = id => {
@@ -72,7 +88,7 @@ const ProjectPage = () => {
 
 	const addSprint = async () => {
 		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
+		if (!token) return;
 		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
 				mutation($projectid: String, $name: String) {
@@ -90,73 +106,52 @@ const ProjectPage = () => {
 			},
 		});
 		if (data.createsprint === undefined || data.createsprint === null) return;
-		const sprints = state.sprints.concat([
-			{
-				_id: data.createsprint._id,
-				name: data.createsprint.name,
-				status: data.createsprint.status,
-				projectid: projectId,
-			},
-		]);
+		const sprints = state.sprints.concat([data.createsprint]);
 		setState({ sprints, openAdd: false });
 	};
 
-	const editSprint = async sprints => {
+	const editProject = async () => {
 		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const sprint = sprints.find(sprint => sprint.name === state.sprintName);
+		if (!token) return;
 		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
-				mutation($sprintid: String, $name: String, $status: String) {
-					editsprint(sprintid: $sprintid, name: $name, status: $status ) {
+				mutation($projectid: String, $name: String, $description: String) {
+					editproject(projectid: $projectid, name: $name, description: $description) {
 						_id
 						name
-						status
-						projectid
-					} 
+						description
+					}
 				}
 			`,
 			variables: {
-				sprintid: sprint._id,
-				name: state.sprintName,
-				status: state.sprintStatus,
+				projectid: projectId,
+				name: state.name,
+				description: state.description,
 			},
 		});
-		const array = state.sprints.map(s => {
-			if (s.name === state.sprintName) {
-				return data.editsprint;
-			} else {
-				return s;
-			}
-		});
-		setState({ openEdit: false, sprints: array });
+		if (data.editproject === undefined || data.editproject === null) return;
+		setState({ project: data.editproject, openEdit: false });
 	};
 
-	const deleteSprint = async sprints => {
+	const deleteProject = async () => {
 		const token = localStorage.getItem("token");
-		if (!token || pageLoaded.current) return;
-		const sprint = sprints.find(sprint => sprint.name === state.sprintName);
+		if (!token) return;
 		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
-				mutation($sprintid: String) {
-					deletesprint(sprintid: $sprintid)
-				}
+				mutation ($projectid: String) { deleteproject (projectid: $projectid) }
 			`,
 			variables: {
-				sprintid: sprint._id,
+				projectid: projectId,
 			},
 		});
-		if (!data.deletesprint) return;
-		setState({
-			openEdit: false,
-			sprints: state.sprints.filter(e => e !== sprint),
-		});
+		if (!data.deleteproject) return;
+		navigate("/");
 	};
 
 	return (
 		<Card>
 			<Card style={{ display: "flex" }}>
-				<h1 style={{ marginLeft: "2%" }}>Sprints for Project {projectId}</h1>
+				<h1 style={{ marginLeft: "2%" }}>Sprints for {state.project.name}</h1>
 				<Button
 					variant="contained"
 					style={{
@@ -177,9 +172,9 @@ const ProjectPage = () => {
 						height: "5%",
 						width: "8%",
 					}}
-					onClick={() => setState({ openEdit: true })}
+					onClick={() => setState({ ...state.project, openEdit: true })}
 				>
-					Edit Sprint
+					Edit Project
 				</Button>
 				<Button
 					variant="contained"
@@ -222,22 +217,21 @@ const ProjectPage = () => {
 			>
 				<Box style={styles.modal}>
 					<Typography style={styles.formElement} variant="h6" component="h2">
-						Edit Sprint
+						Edit {state.project.name}
 					</Typography>
-					<Autocomplete
-						onChange={value => {
-							setState({ sprintName: value.target.textContent });
-						}}
-						//onInputChange={(inputValue) => {setState({sprintName: inputValue.target.textContent})}}
-						options={state.sprints.map(e => e.name)}
-						renderInput={params => (
-							<TextField {...params} label="Sprint Name" variant="outlined" />
-						)}
-					></Autocomplete>
 					<TextField
-						onChange={e => setState({ sprintStatus: e.target.value })}
-						label="Sprint Status"
-						style={{ marginTop: "2%" }}
+						style={styles.formElement}
+						value={state.name}
+						onChange={e => setState({ name: e.target.value })}
+						label="Name"
+						variant="outlined"
+					/>
+					<TextField
+						style={styles.formElement}
+						value={state.description}
+						onChange={e => setState({ description: e.target.value })}
+						label="Description"
+						variant="outlined"
 					/>
 					<Box>
 						<Button
@@ -246,17 +240,11 @@ const ProjectPage = () => {
 						>
 							Cancel
 						</Button>
-						<Button
-							style={styles.formElement}
-							onClick={() => deleteSprint(state.sprints)}
-						>
+						<Button style={styles.formElement} onClick={deleteProject}>
 							Delete
 						</Button>
-						<Button
-							style={styles.formElement}
-							onClick={() => editSprint(state.sprints)}
-						>
-							Confirm
+						<Button style={styles.formElement} onClick={editProject}>
+							Update
 						</Button>
 					</Box>
 				</Box>
