@@ -1,5 +1,6 @@
 const schema = `
 type Query {
+  getauth(reqid: String, projectid: String): Boolean,
   getusers: [User],
   getusersforproject(projectid: String): [UserProject],
   getusersfornotproject(projectid: String): [UserProject],
@@ -91,6 +92,7 @@ type User {
   stories: [StoryReport]
  }
  type UserReport {
+  projectid: String,
   username: String,
   projectname: String,
   sprints: [SprintReport]
