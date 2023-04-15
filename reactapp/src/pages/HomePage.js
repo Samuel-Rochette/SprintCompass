@@ -27,7 +27,10 @@ const HomePage = () => {
 	const [state, setState] = useReducer(reducer, {
 		projects: [],
 		snackbarMsg: "",
+		name: "",
+		description: "",
 		loginStatus: false,
+		openAdd: false,
 	});
 
 	useEffect(() => {
@@ -61,6 +64,37 @@ const HomePage = () => {
 		navigate(`/project/${id}`);
 	};
 
+	const createProject = () => {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		const { userId } = jwtDecode(token);
+		(async () => {
+			const { data } = await graphqlPost(
+				"http://localhost:5000/graphql",
+				token,
+				{
+					query: `
+						mutation($userid: String, $name: String, $description: String) {
+							createproject(userid: $userid, name: $name, description: $description) {
+								_id
+								name
+								description
+							}
+						}
+					`,
+					variables: {
+						userid: userId,
+						name: state.name,
+						description: state.description,
+					},
+				}
+			);
+			if (data.createproject === null) return;
+			const projects = state.projects.concat([data.createproject]);
+			setState({ projects, openAdd: false, name: "", description: "" });
+		})();
+	};
+
 	return (
 		<div>
 			<Grid style={styles.headerContainer} container spacing={2}>
@@ -71,7 +105,12 @@ const HomePage = () => {
 				</Grid>
 				{state.loginStatus && (
 					<Grid item xs={2}>
-						<Button>Create Project</Button>
+						<Button
+							variant="contained"
+							onClick={() => setState({ openAdd: true })}
+						>
+							Create Project
+						</Button>
 					</Grid>
 				)}
 			</Grid>
@@ -86,7 +125,7 @@ const HomePage = () => {
 						</TableHead>
 						<TableBody>
 							{state.projects.map(project => {
-								return ( 
+								return (
 									<TableRow
 										style={styles.tableRow}
 										key={project._id}
@@ -107,6 +146,44 @@ const HomePage = () => {
 				</div>
 			)
 		}
+			)}
+			<Modal
+				open={state.openAdd}
+				onClose={() => setState({ openAdd: false, name: "", description: "" })}
+			>
+				<Box style={styles.modal}>
+					<Typography id="modal-modal-title" variant="h5" component="h2">
+						New Story Item
+					</Typography>
+					<TextField
+						style={styles.formElement}
+						value={state.name}
+						onChange={e => setState({ name: e.target.value })}
+						label="Name"
+						variant="outlined"
+					/>
+					<TextField
+						style={styles.formElement}
+						value={state.description}
+						onChange={e => setState({ description: e.target.value })}
+						label="Description"
+						variant="outlined"
+					/>
+					<Box>
+						<Button
+							style={styles.formElement}
+							onClick={() =>
+								setState({ openAdd: false, name: "", description: "" })
+							}
+						>
+							Cancel
+						</Button>
+						<Button style={styles.formElement} onClick={createProject}>
+							Create Project
+						</Button>
+					</Box>
+				</Box>
+			</Modal>
 		</div>
 	);
 };

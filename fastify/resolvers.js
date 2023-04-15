@@ -108,6 +108,11 @@ const resolvers = {
 		const db = await dbRtns.getDBInstance();
 		const results = await dbRtns.aggregate(db, "stories", [
 			{
+				$match: {
+					sprintid: new ObjectId(sprintid),
+				},
+			},
+			{
 				$lookup: {
 					from: "appusers",
 					localField: "userid",
@@ -116,8 +121,11 @@ const resolvers = {
 				},
 			},
 			{
-				$match: {
-					sprintid: new ObjectId(sprintid),
+				$lookup: {
+					from: "tasks",
+					localField: "_id",
+					foreignField: "storyid",
+					as: "tasks",
 				},
 			},
 		]);
@@ -128,6 +136,11 @@ const resolvers = {
 		const results = (
 			await dbRtns.aggregate(db, "stories", [
 				{
+					$match: {
+						_id: new ObjectId(storyid),
+					},
+				},
+				{
 					$lookup: {
 						from: "appusers",
 						localField: "userid",
@@ -136,8 +149,11 @@ const resolvers = {
 					},
 				},
 				{
-					$match: {
-						_id: new ObjectId(storyid),
+					$lookup: {
+						from: "tasks",
+						localField: "_id",
+						foreignField: "storyid",
+						as: "tasks",
 					},
 				},
 			])
@@ -215,13 +231,7 @@ const resolvers = {
 		);
 		return acknowledged ? { _id: sprintid, name, status } : null;
 	},
-	createstory: async ({
-		userid,
-		sprintid,
-		name,
-		description,
-		hoursestimated,
-	}) => {
+	createstory: async ({ userid, sprintid, name, description, cost }) => {
 		const db = await dbRtns.getDBInstance();
 		const newStory = {
 			sprintid: new ObjectId(sprintid),
@@ -229,8 +239,7 @@ const resolvers = {
 			name,
 			description,
 			status: "Planned",
-			hourslogged: 0,
-			hoursestimated,
+			cost,
 		};
 		const user = await dbRtns.findAll(
 			db,
@@ -245,7 +254,9 @@ const resolvers = {
 			"stories",
 			newStory
 		);
-		return acknowledged ? { ...newStory, user, _id: insertedId } : null;
+		return acknowledged
+			? { ...newStory, user, _id: insertedId, tasks: [] }
+			: null;
 	},
 	deletestory: async ({ storyid }) => {
 		const db = await dbRtns.getDBInstance();
@@ -254,15 +265,7 @@ const resolvers = {
 		});
 		return acknowledged;
 	},
-	editstory: async ({
-		storyid,
-		userid,
-		name,
-		description,
-		status,
-		hoursestimated,
-		hourslogged,
-	}) => {
+	editstory: async ({ storyid, userid, name, description, status, cost }) => {
 		const db = await dbRtns.getDBInstance();
 		const user = await dbRtns.findAll(db, "appusers", {
 			_id: new ObjectId(userid),
@@ -272,8 +275,7 @@ const resolvers = {
 			name,
 			description,
 			status,
-			hourslogged,
-			hoursestimated,
+			cost,
 		};
 		const { acknowledged } = await dbRtns.updateOne(
 			db,
@@ -283,9 +285,15 @@ const resolvers = {
 		);
 		return acknowledged ? { ...newStory, _id: storyid, user } : null;
 	},
-	createtask: async ({ storyid, name }) => {
+	createtask: async ({ storyid, name, hoursestimated }) => {
 		const db = await dbRtns.getDBInstance();
-		const newTask = { storyid: new ObjectId(storyid), name, status: "Planned" };
+		const newTask = {
+			storyid: new ObjectId(storyid),
+			name,
+			status: "Planned",
+			hourslogged: 0,
+			hoursestimated,
+		};
 		const { acknowledged, insertedId } = await dbRtns.addOne(
 			db,
 			"tasks",
@@ -300,15 +308,17 @@ const resolvers = {
 		});
 		return acknowledged;
 	},
-	edittask: async ({ taskid, name, status }) => {
+	edittask: async ({ taskid, name, status, hourslogged, hoursestimated }) => {
 		const db = await dbRtns.getDBInstance();
 		const { acknowledged } = await dbRtns.updateOne(
 			db,
 			"tasks",
 			{ _id: new ObjectId(taskid) },
-			{ $set: { name, status } }
+			{ $set: { name, status, hourslogged, hoursestimated } }
 		);
-		return acknowledged ? { _id: taskid, name, status } : null;
+		return acknowledged
+			? { _id: taskid, name, status, hourslogged, hoursestimated }
+			: null;
 	},
 	addusertoproject: async ({ reqid, userid, projectid }) => {
 		const db = await dbRtns.getDBInstance();
