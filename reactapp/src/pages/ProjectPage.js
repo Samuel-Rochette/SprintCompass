@@ -27,14 +27,11 @@ const ProjectPage = () => {
 	const pageLoaded = useRef(false);
 	const [state, setState] = useReducer(reducer, {
 		sprints: [],
-		sprintid: "",
-		snackbarMsg: "",
-		loginStatus: false,
+		project: {},
 		openAdd: false,
 		openEdit: false,
-		sprintName: "",
-		sprintStatus: "",
-		index: 0,
+		name: "",
+		description: "",
 	});
 	useEffect(() => {
 		const token = localStorage.getItem("token");
@@ -59,6 +56,25 @@ const ProjectPage = () => {
 				}
 			);
 			setState({sprints: data.getsprintsforproject});
+		})();
+
+		(async () => {
+			const { data } = await graphqlPost(
+				"http://localhost:5000/graphql",
+				token,
+				{
+					query: `
+						query($projectid: String) {
+							getprojectbyid(projectid: $projectid) {
+								name
+								description
+							}
+						}
+					`,
+					variables: { projectid: projectId },
+				}
+			);
+			setState({ project: data.getprojectbyid });
 		})();
 	}, []);
 
@@ -152,14 +168,81 @@ const ProjectPage = () => {
 		});
 	}
 
+	const addSprint = async () => {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
+			query: `
+				mutation($projectid: String, $name: String) {
+					createsprint(projectid: $projectid, name: $name ) {
+						_id
+						name
+						status
+						projectid
+					} 
+				}
+			`,
+			variables: {
+				projectid: projectId,
+				name: state.sprintName,
+			},
+		});
+		if (data.createsprint === undefined || data.createsprint === null) return;
+		const sprints = state.sprints.concat([data.createsprint]);
+		setState({ sprints, openAdd: false });
+	};
+
+	const editProject = async () => {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
+			query: `
+				mutation($projectid: String, $name: String, $description: String) {
+					editproject(projectid: $projectid, name: $name, description: $description) {
+						_id
+						name
+						description
+					}
+				}
+			`,
+			variables: {
+				projectid: projectId,
+				name: state.name,
+				description: state.description,
+			},
+		});
+		if (data.editproject === undefined || data.editproject === null) return;
+		setState({ project: data.editproject, openEdit: false });
+	};
+
+	const deleteProject = async () => {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
+			query: `
+				mutation ($projectid: String) { deleteproject (projectid: $projectid) }
+			`,
+			variables: {
+				projectid: projectId,
+			},
+		});
+		if (!data.deleteproject) return;
+		navigate("/");
+	};
+
 	return (
 		<Card>
-			<Card style={{display: 'flex'}}>
-				<h1 style={{marginLeft: "2%"}}>Sprints for Project {projectId}</h1>
-				<Button 
-					variant="contained" 
-					style={{marginTop: "1%", marginLeft: "35%", height: "5%", width: "6%"}}
-					onClick={() => setState({openAdd: true})}
+			<Card style={{ display: "flex" }}>
+				<h1 style={{ marginLeft: "2%" }}>Sprints for {state.project.name}</h1>
+				<Button
+					variant="contained"
+					style={{
+						marginTop: "1%",
+						marginLeft: "45%",
+						height: "5%",
+						width: "6%",
+					}}
+					onClick={() => setState({ openAdd: true })}
 				>
 					New Sprint
 				</Button>
@@ -172,8 +255,13 @@ const ProjectPage = () => {
 				</Button>
 				<Button 
 					variant="contained"
-					style={{marginTop: "1%", marginLeft: "1%", height: "5%", width: "8%"}}
-					onClick={addUser}
+					style={{
+						marginTop: "1%",
+						marginLeft: "1%",
+						height: "5%",
+						width: "8%",
+					}}
+					onClick={() => setState({ ...state.project, openEdit: true })}
 				>
 					Add User
 				</Button>
@@ -185,16 +273,13 @@ const ProjectPage = () => {
 					Return Home
 				</Button>
 			</Card>
-			<Modal
-				open={state.openAdd}
-				onClose={() => setState({ openAdd: false })}
-			>
+			<Modal open={state.openAdd} onClose={() => setState({ openAdd: false })}>
 				<Box style={styles.modal}>
 					<Typography style={styles.formElement} variant="h6" component="h2">
 						Add Sprint
 					</Typography>
 					<TextField
-						onChange={(e) => setState({sprintName: e.target.value})}
+						onChange={e => setState({ sprintName: e.target.value })}
 						label="Sprint Name"
 					/>
 					<Box>
@@ -216,21 +301,21 @@ const ProjectPage = () => {
 			>
 				<Box style={styles.modal}>
 					<Typography style={styles.formElement} variant="h6" component="h2">
-						Edit Sprint
+						Edit {state.project.name}
 					</Typography>
-					<Autocomplete
-						onChange={(value) => {setState({sprintName: value.target.textContent})}}
-						//onInputChange={(inputValue) => {setState({sprintName: inputValue.target.textContent})}}
-						options={state.sprints.map((e) => e.name)}
-						renderInput={params => (
-								<TextField {...params} label="Sprint Name" variant="outlined" />
-						)}
-					>
-					</Autocomplete>
 					<TextField
-						onChange={(e) => setState({sprintStatus: e.target.value})}
-						label="Sprint Status"
-						style={{marginTop: "2%"}}
+						style={styles.formElement}
+						value={state.name}
+						onChange={e => setState({ name: e.target.value })}
+						label="Name"
+						variant="outlined"
+					/>
+					<TextField
+						style={styles.formElement}
+						value={state.description}
+						onChange={e => setState({ description: e.target.value })}
+						label="Description"
+						variant="outlined"
 					/>
 					<Box>
 						<Button
@@ -239,11 +324,11 @@ const ProjectPage = () => {
 						>
 							Cancel
 						</Button>
-						<Button style={styles.formElement} onClick={() => deleteSprint(state.sprints)}>
+						<Button style={styles.formElement} onClick={deleteProject}>
 							Delete
 						</Button>
-						<Button style={styles.formElement} onClick={() => editSprint(state.sprints)}>
-							Confirm
+						<Button style={styles.formElement} onClick={editProject}>
+							Update
 						</Button>
 					</Box>
 				</Box>

@@ -11,6 +11,14 @@ export default {
 		padding: "20px",
 		borderRadius: "8px",
 	},
+	modalTextField1:{
+		margin: "5px",
+		width: "45%"
+	},
+	modalTextField2:{
+		margin: "5px",
+		width: "92%"
+	},
 	formElement: {
 		margin: "10px",
 	},
@@ -20,4 +28,16 @@ export default {
 	tableRow: {
 		cursor: "pointer",
 	},
+	container: {
+		flex: 1,
+		flexDirection: 'column',
+		textAlign: 'center',
+		justifyContent: 'center',
+		alignItems: 'center',
+		margin: 20,
+	},
+	image:{
+		width: '480px',
+		height: '250px'
+	}
 };
