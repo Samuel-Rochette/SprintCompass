@@ -28,4 +28,16 @@ export default {
 	tableRow: {
 		cursor: "pointer",
 	},
+	container: {
+		flex: 1,
+		flexDirection: 'column',
+		textAlign: 'center',
+		justifyContent: 'center',
+		alignItems: 'center',
+		margin: 20,
+	},
+	image:{
+		width: '480px',
+		height: '250px'
+	}
 };
