@@ -38,8 +38,9 @@ const StoryPage = () => {
 		name: "",
 		status: "Development",
 		description: "",
-		hourslogged: 0,
-		hoursestimated: 0,
+		hourslogged: "",
+		hoursestimated: "",
+		cost: "",
 		userid: "",
 		username: "",
 	});
@@ -47,26 +48,6 @@ const StoryPage = () => {
 	useEffect(() => {
 		const token = localStorage.getItem("token");
 		if (!token || pageLoaded.current) return;
-		(async () => {
-			const { data } = await graphqlPost(
-				"http://localhost:5000/graphql",
-				token,
-				{
-					query: `
-						query($storyid: String) {
-							gettasksforstory(storyid: $storyid) {
-								_id
-								storyid
-								name
-								status 
-							}
-						}
-					`,
-					variables: { storyid: storyId },
-				}
-			);
-			setState({ tasks: data.gettasksforstory });
-		})();
 
 		(async () => {
 			const { data } = await graphqlPost(
@@ -77,21 +58,20 @@ const StoryPage = () => {
 						query($storyid: String) {
 							getstorybyid(storyid: $storyid) {
 								_id
-								sprintid
 								userid
 								name
 								description
 								status
-								hourslogged
-								hoursestimated
+								cost
 								user { username }
+								tasks { _id, storyid, name, status, hourslogged, hoursestimated }
 							} 
 						}
 					`,
 					variables: { storyid: storyId },
 				}
 			);
-			setState({ story: data.getstorybyid });
+			setState({ story: data.getstorybyid, tasks: data.getstorybyid.tasks });
 		})();
 
 		(async () => {
@@ -132,18 +112,16 @@ const StoryPage = () => {
 		!token && navigate("/");
 		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
-				mutation($storyid: String, $name: String) {
-					createtask(storyid: $storyid name: $name) {
-						_id
-						storyid
-						name
-						status 
+				mutation($storyid: String, $name: String, $hoursestimated: Int) {
+					createtask (storyid: $storyid name: $name, hoursestimated: $hoursestimated) {
+						_id, storyid, name, status, hourslogged, hoursestimated 
 					} 
 				}
 			`,
 			variables: {
 				storyid: storyId,
 				name: state.name,
+				hoursestimated: parseInt(state.hoursestimated),
 			},
 		});
 		if (data.createtask === null) return;
@@ -156,24 +134,22 @@ const StoryPage = () => {
 		!token && navigate("/");
 		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
 			query: `
-			mutation($taskid: String, $name: String, $status: String) {
-				edittask(taskid: $taskid, name: $name, status: $status) {
-					_id
-					name
-					status
-				}
-			}
+			mutation ($taskid: String, $name: String, $status: String, $hourslogged: Int, $hoursestimated: Int) { edittask (taskid: $taskid, name: $name, status: $status, hourslogged: $hourslogged, hoursestimated: $hoursestimated) { _id, name, status, hourslogged, hoursestimated } }
 			`,
 			variables: {
 				taskid: state.tasks[state.selectedTask]._id,
 				name: state.name,
 				status: state.status,
+				hourslogged: parseInt(state.hourslogged),
+				hoursestimated: parseInt(state.hoursestimated),
 			},
 		});
 		if (data.edittask === null) return;
 		let ref = state.tasks.slice();
 		ref[state.selectedTask].name = state.name;
 		ref[state.selectedTask].status = state.status;
+		ref[state.selectedTask].hourslogged = state.hourslogged;
+		ref[state.selectedTask].hoursestimated = state.hoursestimated;
 		setState({ openEditTask: false, name: "", status: "Development" });
 	};
 
@@ -208,19 +184,7 @@ const StoryPage = () => {
 				token,
 				{
 					query: `
-					mutation($userid: String, $storyid: String, $name: String, $description: String, $status: String, $hoursestimated: Int, $hourslogged: Int) {
-						editstory(userid: $userid, storyid: $storyid, name: $name, description: $description, status: $status, hoursestimated: $hoursestimated, hourslogged: $hourslogged) {
-							_id
-							sprintid
-							userid
-							name
-							description
-							status
-							hourslogged
-							hoursestimated
-							user { username }
-						}
-					}
+					mutation($userid: String, $storyid: String, $name: String, $description: String, $status: String, $cost: Int) { editstory(userid: $userid, storyid: $storyid, name: $name, description: $description, status: $status, cost: $cost) { _id, userid, name, description, status, cost, user { username } } }
 				`,
 					variables: {
 						userid: state.userid,
@@ -228,12 +192,10 @@ const StoryPage = () => {
 						name: state.name,
 						description: state.description,
 						status: state.status,
-						hourslogged: parseInt(state.hourslogged),
-						hoursestimated: parseInt(state.hoursestimated),
+						cost: parseInt(state.cost),
 					},
 				}
 			);
-			console.log(data);
 			if (data.editstory === null) return;
 			setState({
 				story: data.editstory,
@@ -241,8 +203,7 @@ const StoryPage = () => {
 				name: "",
 				status: "Development",
 				description: "",
-				hourslogged: 0,
-				hoursestimated: 0,
+				cost: "",
 				userid: "",
 			});
 		} catch (err) {
@@ -254,26 +215,21 @@ const StoryPage = () => {
 		const token = localStorage.getItem("token");
 		!token && navigate("/");
 
-		const { data } = await graphqlPost(
-			"http://localhost:5000/graphql",
-			token,
-			{
-				query: `
+		const { data } = await graphqlPost("http://localhost:5000/graphql", token, {
+			query: `
 				mutation ($storyid: String) { 
 					deletestory (
 						storyid: $storyid) 
 					}
 			`,
-			
-				variables: {
-					storyid: storyId
-				},
-			}
-		);
-		if(!data.deleteStory) return;
-		navigate("/");
 
-	}
+			variables: {
+				storyid: storyId,
+			},
+		});
+		if (!data.deleteStory) return;
+		navigate("/");
+	};
 
 	return (
 		<Card>
@@ -329,6 +285,8 @@ const StoryPage = () => {
 							<TableRow>
 								<TableCell>Name</TableCell>
 								<TableCell>Status</TableCell>
+								<TableCell>Hours Logged</TableCell>
+								<TableCell>Hours Estimated</TableCell>
 							</TableRow>
 						</TableHead>
 						<TableBody>
@@ -341,12 +299,16 @@ const StoryPage = () => {
 											setState({
 												selectedTask: idx,
 												name: state.tasks[idx].name,
+												hourslogged: state.tasks[idx].hourslogged,
+												hoursestimated: state.tasks[idx].hoursestimated,
 												openEditTask: true,
 											})
 										}
 									>
 										<TableCell>{task.name}</TableCell>
 										<TableCell>{task.status}</TableCell>
+										<TableCell>{task.hourslogged}</TableCell>
+										<TableCell>{task.hoursestimated}</TableCell>
 									</TableRow>
 								);
 							})}
@@ -356,7 +318,9 @@ const StoryPage = () => {
 			)}
 			<Modal
 				open={state.openAdd}
-				onClose={() => setState({ openAdd: false, name: "" })}
+				onClose={() =>
+					setState({ openAdd: false, name: "", hoursestimated: "" })
+				}
 			>
 				<Box style={styles.modal}>
 					<Typography style={styles.formElement} variant="h6" component="h2">
@@ -369,10 +333,19 @@ const StoryPage = () => {
 						value={state.name}
 						onChange={e => setState({ name: e.target.value })}
 					/>
+					<TextField
+						style={styles.formElement}
+						variant="outlined"
+						label="Hour Estimated"
+						value={state.hoursestimated}
+						onChange={e => setState({ hoursestimated: e.target.value })}
+					/>
 					<Box>
 						<Button
 							style={styles.formElement}
-							onClick={() => setState({ openAdd: false, name: "" })}
+							onClick={() =>
+								setState({ openAdd: false, name: "", hoursestimated: "" })
+							}
 						>
 							Cancel
 						</Button>
@@ -385,7 +358,13 @@ const StoryPage = () => {
 			<Modal
 				open={state.openEditTask}
 				onClose={() =>
-					setState({ openEditTask: false, name: "", status: "Development" })
+					setState({
+						openEditTask: false,
+						name: "",
+						status: "Development",
+						hourslogged: "",
+						hoursestimated: "",
+					})
 				}
 			>
 				<Box style={styles.modal}>
@@ -413,6 +392,20 @@ const StoryPage = () => {
 						<MenuItem value="Testing">Testing</MenuItem>
 						<MenuItem value="Completed">Completed</MenuItem>
 					</Select>
+					<TextField
+						style={styles.formElement}
+						variant="outlined"
+						label="Hours Logged"
+						value={state.hourslogged}
+						onChange={e => setState({ hourslogged: e.target.value })}
+					/>
+					<TextField
+						style={styles.formElement}
+						variant="outlined"
+						label="Hours Estimated"
+						value={state.hoursestimated}
+						onChange={e => setState({ hoursestimated: e.target.value })}
+					/>
 					<Box>
 						<Button
 							style={styles.formElement}
@@ -421,6 +414,8 @@ const StoryPage = () => {
 									openEditTask: false,
 									name: "",
 									status: "Development",
+									hourslogged: "",
+									hoursestimated: "",
 								})
 							}
 						>
@@ -443,8 +438,7 @@ const StoryPage = () => {
 						name: "",
 						status: "Development",
 						description: "",
-						hourslogged: 0,
-						hoursestimated: 0,
+						cost: "",
 						userid: "",
 					})
 				}
@@ -491,16 +485,9 @@ const StoryPage = () => {
 					<TextField
 						style={styles.formElement}
 						variant="outlined"
-						label="Hours Logged"
-						value={state.hourslogged}
-						onChange={e => setState({ hourslogged: e.target.value })}
-					/>
-					<TextField
-						style={styles.formElement}
-						variant="outlined"
-						label="Hours Estimated"
-						value={state.hoursestimated}
-						onChange={e => setState({ hoursestimated: e.target.value })}
+						label="Cost/hr"
+						value={state.cost}
+						onChange={e => setState({ cost: e.target.value })}
 					/>
 					<Box>
 						<Button
@@ -511,8 +498,7 @@ const StoryPage = () => {
 									name: "",
 									status: "Development",
 									description: "",
-									hourslogged: 0,
-									hoursestimated: 0,
+									cost: "",
 									userid: "",
 								})
 							}
